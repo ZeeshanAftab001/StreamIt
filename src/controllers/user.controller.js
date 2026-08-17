@@ -25,7 +25,7 @@ const registerUser = asyncHandler( async (req,res) =>{
         throw new APIError(404,"Avatar Image not found")
     }
     const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const coverImage = await uploadOnCloudinary(coverImage_local_path)
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
     if(!avatar){
         throw new APIError(404,"Avatar Image not found")

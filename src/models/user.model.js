@@ -46,18 +46,17 @@ const useSchema=new mongoose.Schema({
 
 },{timestamps : true})
 
-useSchema.pre("save",async function(next){
-    if(!this.isModified("password")) return next()
+useSchema.pre("save",async function(){
+    if(!this.isModified("password")) return 
 
     this.password=await bcrypt.hash(this.password,10)
-    next()
 })
 
-useSchema.method.isPasswordCorrect=async function (password) {
+useSchema.methods.isPasswordCorrect=async function (password) {
     return await bcrypt.compare(password,this.password)
 }
 
-useSchema.method.generateAccessToken=async function(){
+useSchema.methods.generateAccessToken=async function(){
     return await jwt.sign(
         {
             _id : this._id,
@@ -73,7 +72,7 @@ useSchema.method.generateAccessToken=async function(){
     )
 }
 
-useSchema.method.generateRefreshToken=async function(){
+useSchema.methods.generateRefreshToken=async function(){
     return await jwt.sign(
         {
             _id : this._id,
