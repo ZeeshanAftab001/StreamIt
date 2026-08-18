@@ -80,7 +80,6 @@ const registerUser = asyncHandler( async (req,res) =>{
     )
 })
 
-
 const loginUser = asyncHandler(async (req,res) => {
     if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({
@@ -181,7 +180,124 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
     }
 
 })
-export {registerUser,
-        loginUser,
-        logoutUser,
-    refreshAccessToken}
+
+const updateUserPassword = asyncHandler(async (req,res) => {
+    const {oldPassword,newPassword}=req.body
+    if(!oldPassword || !newPassword){
+        throw new APIError(401,"New or Old Password is missing.")
+    }
+    const user=await User.findById(req?.user._id)
+    const isPasswordCorrect=await user.isPasswordCorrect(oldPassword)
+    if(!isPasswordCorrect){
+        throw new APIError(401,"Incorrect Password.")
+    }
+    user.password=newPassword
+    await user.save({validateBeforeSave : false})
+
+    res
+    .status(200)
+    .json(new APIResponse(200,"Password Updated Successfully."))
+})
+
+const getCurrentUser = asyncHandler(async(req,res) => {
+    if(!req.user){
+        throw new APIError(400,"Unauthorized Request.")
+    }
+    res
+    .status(200)
+    .json(new APIResponse(200,"",req?.user))
+})
+
+const updateUser = asyncHandler(async (req,res)=>{
+    const {email,fullName}=req.body
+    if(!email || !fullName){
+        throw new APIError(401,"email or fullName is missing.")
+    }
+    const user=await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set : {
+                email : email,
+                fullName : fullName
+            }
+        },
+        { new : true }
+    ).select("-password")
+
+    res
+    .status(200)
+    .json(new APIResponse(200,"User Updated Successfully.",user))
+})
+
+const updateAvatar = asyncHandler(async (req,res)=>{
+    const avatarLocalPath=req.file?.path
+    if(!avatarLocalPath){
+        throw new APIError(401,"please upload the file.")
+    }
+    
+    const avatar=await uploadOnCloudinary(avatarLocalPath)
+    if(!avatar){
+        throw new APIError(500,"Something went wrong while uploading the file.")
+    }
+    const user=await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set : {
+                avatar : avatar?.url || " "
+            }
+        },
+        { new : true }
+    ).select("-password -refreshToken")
+    if(!user){
+        throw APIError(401,"Unauthorized Request")
+    }
+
+    res
+    .status(200)
+    .json(new APIResponse(200,"Avatar Updated Successfully.",user))
+})
+
+const updatecoverImage = asyncHandler(async (req,res)=>{
+    const coverImageLocalPath=req.file?.path
+   try {
+     if(!coverImageLocalPath){
+         throw new APIError(401,"please upload the file.")
+     }
+     
+     const coverImage=await uploadOnCloudinary(coverImageLocalPath)
+     if(!coverImage){
+         throw new APIError(500,"Something went wrong while uploading the file.")
+     }
+     const user=await User.findByIdAndUpdate(
+         req.user?._id,
+         {
+             $set : {
+                 coverImage : coverImage?.url || " "
+             }
+         },
+         { new : true }
+     ).select("-password -refreshToken")
+     if(!user){
+         throw APIError(401,"Unauthorized Request")
+     }
+ 
+     res
+     .status(200)
+     .json(new APIResponse(200,"Cover Image Updated Successfully.",user))
+
+   } catch (error) {
+        res.json(APIError(401,error?.message))
+   }
+})
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    updateUserPassword,
+    getCurrentUser,
+    updateUser,
+    updateAvatar,
+    updatecoverImage
+    }
