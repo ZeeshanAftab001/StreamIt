@@ -30,7 +30,6 @@ const generateAccessAndResfreshToken = async (userId) =>{
     }
 }
 
-
 const registerUser = asyncHandler( async (req,res) =>{
     const {username,fullName,email,password}=req.body
     
@@ -166,7 +165,7 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
     
         const {accessToken,refreshToken}=await generateAccessAndResfreshToken(user._id)
     
-        options = {
+        const options = {
             httpOnly : true,
             secure : true
         }
@@ -182,8 +181,6 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
     }
 
 })
-
-
 export {registerUser,
         loginUser,
         logoutUser,
