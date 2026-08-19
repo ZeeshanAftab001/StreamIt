@@ -4,6 +4,7 @@ import {APIResponse} from "../utils/apiResponse.js"
 import {User} from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from 'jsonwebtoken'
+import mongoose from "mongoose";
 
 
 const generateAccessAndResfreshToken = async (userId) =>{
@@ -355,6 +356,61 @@ const getUserChannelProfile = asyncHandler(async (req,res)=>{
     .json(new APIResponse(201,"Channel details found.",channel[0]))
 })
 
+const getWatchHistory = asyncHandler(async (req,res)=>{
+    if(!req.user){
+        throw new APIError(401,"UnAuthorized Request")
+    }
+    const user=await User.aggregate([
+        {
+            $match : {
+                _id : new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup : {
+                from : "videos",
+                localField : "watchHistory",
+                foreignField : "_id",
+                as : "watchHistory",
+                pipeline : [
+                    {
+                        $lookup : {
+                            from : "users",
+                            localField : "_id",
+                            foreignField : "_id",
+                            as : "owner",
+                            pipeline : [
+                                {
+                                    $project : {
+                                        username : 1,
+                                        email : 1,
+                                        avatar : 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields : {
+                            owner : {
+                                $first : "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+    if(!user){
+        throw new APIError(404,"No watch history found.")
+    }
+    res
+    .status(200)
+    .json(new APIResponse(200,"",user[0].watchHistory))
+
+
+})
+
 export {
     registerUser,
     loginUser,
@@ -365,5 +421,6 @@ export {
     updateUser,
     updateAvatar,
     updateCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
     }
