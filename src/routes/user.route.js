@@ -16,7 +16,7 @@ route.route("/current-user").post(verifyJWT,getCurrentUser)
 route.route("/update-user").post(verifyJWT,updateUser)
 route.route("/update-avatar").post(upload.single("avatar"),verifyJWT,updateAvatar)
 route.route("/update-cover").post(upload.single("coverImage"),verifyJWT,updateCoverImage)
-route.route("/get-user-channel-profile").get(upload.single("coverImage"),verifyJWT,getUserChannelProfile)
+route.route("/channel/:username").get(upload.single("coverImage"),verifyJWT,getUserChannelProfile)
 
 
 export default route
