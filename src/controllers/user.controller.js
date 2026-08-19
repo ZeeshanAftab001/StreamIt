@@ -444,14 +444,15 @@ const getUserVideos=asyncHandler(async (req,res)=>{
         }
     ])
 
-    if(!videos){
-        throw new APIError(404,"No Videos Found.")
+    if (!videos || videos.length === 0) {
+        throw new APIError(404, "Videos not found");
     }
 
     res
     .status(200)
-    .json(new APIResponse(200,"Video Found.",videos[0].userVideos))
+    .json(new APIResponse(200,"Videos Found.",videos[0].userVideos))
 })
+
 export {
     registerUser,
     loginUser,

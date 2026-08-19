@@ -53,23 +53,80 @@ const updateVideoMetaData=asyncHandler(async (req,res)=>{
         throw new APIError(404,"title and description are required.")
     }
 
-    const updatedVideo =await Video.findByIdAndUpdate(videoId,{
-        title : title,
-        description : description
-    })
+    const video=await Video.findById(videoId)
 
-    if(!updatedVideo ){
-        throw new APIError(500,"Something went wrong while updating video.")
+    if(!video){
+        throw new APIError(404,"video not found.")
     }
+    if (video.owner.toString() !== req.user._id.toString()) {
+            throw new APIError(403, "You are not authorized to update this video.");
+    }
+
+    video.title=title
+    video.description=description
+    video.save({validateBeforeSave : false})
 
     res
     .status(200)
     .json(new APIResponse(200,"Video Updated Successfully.",updatedVideo))
 })
 
+const updateVideoFile = asyncHandler(async (req,res)=>{
+    
+    const {videoId}=req.params
+    if(videoId=== ""){
+        throw new APIError(404,"Invalid Video Id.");
+    }
+
+    const videoFileLocalPath=req.file?.path
+
+    if(!videoFileLocalPath){
+        throw new APIError(404,"Please Enter a Video File.")
+    }
+
+    try {
+        const uploadedVideo=await uploadOnCloudinary(videoFileLocalPath)
+        if(!uploadedVideo){
+            throw new APIError(501,"Something went wrong during uploading video.")
+        }
+
+        const video=await Video.findById(videoId)
+        if(!video){
+            throw new APIError(404,"video not found.")
+        }
+
+        if (video.owner.toString() !== req.user._id.toString()) {
+            throw new APIError(403, "You are not authorized to update this video.");
+        }
+
+        video.videoFile=uploadedVideo?.url || " "
+        video.duration=uploadedVideo?.duration || 0
+
+        await video.save({validateBeforeSave : false})
+
+        res
+        .status(200)
+        .json(new APIResponse(200,"Video File Updated Successfuly.",video))
+ 
+    } catch (error) {
+        throw new APIError(501,error?.message || "something went wrong")
+    }
+})
+
+const getAllVideos = asyncHandler(async (req,res)=>{
+    const videos=await Video.find()
+    if(!videos){
+        throw new APIError(404,"Videos not found")
+    }
+    res
+    .status(200)
+    .json(new APIResponse(200,"Videos Found.",videos))
+
+})
+
 export {
     uploadVideo,
     updateVideoMetaData,
-    
-    
+    updateVideoFile,
+    getAllVideos
 }
