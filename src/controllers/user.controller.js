@@ -257,7 +257,7 @@ const updateAvatar = asyncHandler(async (req,res)=>{
     .json(new APIResponse(200,"Avatar Updated Successfully.",user))
 })
 
-const updatecoverImage = asyncHandler(async (req,res)=>{
+const updateCoverImage = asyncHandler(async (req,res)=>{
     const coverImageLocalPath=req.file?.path
    try {
      if(!coverImageLocalPath){
@@ -299,5 +299,5 @@ export {
     getCurrentUser,
     updateUser,
     updateAvatar,
-    updatecoverImage
+    updateCoverImage
     }
