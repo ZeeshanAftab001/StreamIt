@@ -408,9 +408,50 @@ const getWatchHistory = asyncHandler(async (req,res)=>{
     .status(200)
     .json(new APIResponse(200,"",user[0].watchHistory))
 
-
 })
 
+const getUserVideos=asyncHandler(async (req,res)=>{
+    const videos=await User.aggregate([
+        {   
+            $match : {_id : new mongoose.Types.ObjectId(req.user._id)}
+        },
+        {
+           $lookup : {
+                from : "videos",
+                localField : "_id",
+                foreignField : "owner",
+                as : "userVideos",
+                pipeline : [
+                   {
+                       $project: {
+                            _id: 1,
+                            videoFile: 1,
+                            thumbnail: 1,
+                            title: 1,
+                            description: 1,
+                            duration: 1,
+                            views: 1,
+                            createdAt: 1
+                        } 
+                   }
+                ]
+           } 
+        },
+        {
+            $project: {
+                userVideos : 1
+            }
+        }
+    ])
+
+    if(!videos){
+        throw new APIError(404,"No Videos Found.")
+    }
+
+    res
+    .status(200)
+    .json(new APIResponse(200,"Video Found.",videos[0].userVideos))
+})
 export {
     registerUser,
     loginUser,
@@ -422,5 +463,6 @@ export {
     updateAvatar,
     updateCoverImage,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
+    getUserVideos
     }
